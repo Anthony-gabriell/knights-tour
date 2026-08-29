@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Passeio do Cavalo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:        #0a0d16;
+    --ink-panel:  #121728;
+    --ink-panel-2:#161c33;
+    --sq-a:       #1b2340;
+    --sq-b:       #10142a;
+    --brass:      #c9a24b;
+    --brass-dim:  #8a7238;
+    --star:       #7ec4e8;
+    --parchment:  #eae1c8;
+    --parchment-dim: #9aa0b4;
+    --ember:      #e2606f;
+    --moss:       #59c894;
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    --cellFont: 16px;
+    --knight-size: 20px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: radial-gradient(ellipse at 50% -10%, #1b2245 0%, var(--ink) 55%, #060810 100%);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    min-height:100vh;
+  }
+
+  .app{
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 28px 18px 40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 18px;
+  }
+
+  header{ text-align:center; }
+  h1{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(24px, 5vw, 34px);
+    letter-spacing: 0.03em;
+    color: var(--brass);
+    margin: 0 0 6px;
+    text-shadow: 0 0 22px rgba(201,162,75,0.25);
+  }
+  .subtitle{
+    color: var(--parchment-dim);
+    font-size: 14px;
+    margin:0;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---- board size selector ---- */
+  .size-selector{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+  }
+  .size-btn{
+    background: var(--ink-panel);
+    border: 1px solid rgba(201,162,75,0.35);
+    color: var(--parchment);
+    border-radius: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    text-align:center;
+    line-height:1.35;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    min-width: 92px;
+  }
+  .size-btn .sz{ display:block; font-weight:700; font-size:14px; font-family: var(--font-mono); }
+  .size-btn .diff{ display:block; font-size:10.5px; color: var(--parchment-dim); letter-spacing:0.02em; }
+  .size-btn:hover{ border-color: var(--brass); transform: translateY(-1px); }
+  .size-btn.active{
+    background: linear-gradient(160deg, var(--brass) 0%, var(--brass-dim) 100%);
+    border-color: var(--brass);
+    color: #1a1305;
+  }
+  .size-btn.active .diff{ color: #382c0e; }
+  .size-btn:focus-visible{ outline: 2px solid var(--star); outline-offset: 2px; }
+
+  /* ---- stats bar ---- */
+  .stats-bar{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    align-items:stretch;
+  }
+  .stat{
+    background: var(--ink-panel);
+    border: 1px solid rgba(126,196,232,0.18);
+    border-radius: 10px;
+    padding: 8px 16px;
+    min-width: 88px;
+    text-align:center;
+  }
+  .stat-label{
+    display:block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--parchment-dim);
+    margin-bottom: 3px;
+  }
+  .stat-value{
+    display:block;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight:600;
+    color: var(--star);
+  }
+  .btn-restart{
+    background: var(--ink-panel);
+    border: 1px solid rgba(226,96,111,0.4);
+    color: var(--ember);
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-family: var(--font-body);
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-restart:hover{ background: rgba(226,96,111,0.12); transform: translateY(-1px); }
+  .btn-restart:focus-visible{ outline: 2px solid var(--star); outline-offset:2px; }
+
+  /* ---- message ---- */
+  .message{
+    width:100%;
+    text-align:center;
+    font-size: 13.5px;
+    color: var(--parchment-dim);
+    background: var(--ink-panel);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-height: 18px;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .message.won{
+    color: var(--moss);
+    border-color: rgba(89,200,148,0.45);
+    background: rgba(89,200,148,0.07);
+    animation: winPulse 1.6s ease-in-out infinite;
+  }
+  .message.stuck{
+    color: var(--ember);
+    border-color: rgba(226,96,111,0.45);
+    background: rgba(226,96,111,0.06);
+  }
+
+  /* ---- board ---- */
+  .board-wrapper{
+    position:relative;
+    width: min(560px, 92vw);
+    aspect-ratio: 1 / 1;
+  }
+  .board{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:grid;
+    border-radius: 8px;
+    overflow:hidden;
+    box-shadow: 0 0 0 1px rgba(201,162,75,0.3), 0 18px 50px -12px rgba(0,0,0,0.7);
+  }
+  .cell{
+    position:relative;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family: var(--font-mono);
+    font-size: var(--cellFont);
+    font-weight:600;
+    color: rgba(234,225,200,0.35);
+    cursor:pointer;
+    padding:0;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cell.sq-a{ background: var(--sq-a); }
+  .cell.sq-b{ background: var(--sq-b); }
+
+  .cell:focus-visible{
+    outline: 2px solid var(--star);
+    outline-offset: -2px;
+    z-index: 3;
+  }
+
+  .cell.legal{
+    box-shadow: inset 0 0 0 2px rgba(126,196,232,0.55);
+    animation: legalPulse 1.4s ease-in-out infinite;
+  }
+  .cell.legal:hover{ background: rgba(126,196,232,0.14); }
+
+  .cell.visited{
+    background: var(--trail-color, var(--brass));
+    color: rgba(10,13,22,0.75);
+  }
+  .cell.visited .move-num{
+    font-size: 0.72em;
+    opacity: 0.85;
+  }
+
+  .cell.current{
+    background: radial-gradient(circle, #f4d98a 0%, var(--brass) 65%, var(--brass-dim) 100%);
+    box-shadow: 0 0 0 2px rgba(244,217,138,0.9), 0 0 18px 4px rgba(201,162,75,0.55);
+    z-index: 4;
+  }
+  .cell.current .knight-icon{
+    font-size: var(--knight-size);
+    color: #1a1305;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+  }
+
+  .cell.invalid{ animation: shake 0.3s ease; }
+
+  .cell:disabled{ cursor:default; }
+
+  /* ---- legend ---- */
+  .legend{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    justify-content:center;
+    font-size: 12px;
+    color: var(--parchment-dim);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot.visited{ background: linear-gradient(135deg, var(--star), var(--brass)); }
+  .dot.legal{ background: transparent; box-shadow: inset 0 0 0 2px var(--star); }
+  .dot.current{ background: var(--brass); box-shadow: 0 0 8px 2px rgba(201,162,75,0.7); }
+
+  /* ---- animations ---- */
+  @keyframes legalPulse{
+    0%,100%{ box-shadow: inset 0 0 0 2px rgba(126,196,232,0.35); }
+    50%{ box-shadow: inset 0 0 0 2px rgba(126,196,232,0.85); }
+  }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-4px); }
+    75%{ transform: translateX(4px); }
+  }
+  @keyframes winPulse{
+    0%,100%{ box-shadow: 0 0 0 rgba(89,200,148,0); }
+    50%{ box-shadow: 0 0 16px rgba(89,200,148,0.25); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 420px){
+    .stat{ min-width: 72px; padding: 7px 10px; }
+    .size-btn{ min-width: 78px; padding:7px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>♞ Passeio do Cavalo</h1>
+    <p class="subtitle">Percorra todas as casas do tabuleiro, uma única vez — sem repetir e sem voltar atrás.</p>
+  </header>
+
+  <div class="size-selector" id="sizeSelector"></div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-label">Progresso</span>
+      <span class="stat-value" id="statProgress">0/25</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Tempo</span>
+      <span class="stat-value" id="statTimer">00:00</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Meta</span>
+      <span class="stat-value" id="statPar">01:30</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Dificuldade</span>
+      <span class="stat-value" id="statDiff" style="font-size:12.5px;">Fácil</span>
+    </div>
+    <button class="btn-restart" id="restartBtn" type="button">↻ Reiniciar</button>
+  </div>
+
+  <div class="message" id="message">Clique em qualquer casa para posicionar o cavalo e começar.</div>
+
+  <div class="board-wrapper">
+    <div class="board" id="board" role="grid" aria-label="Tabuleiro do passeio do cavalo"></div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot visited"></i> visitada</span>
+    <span><i class="dot legal"></i> movimento possível</span>
+    <span><i class="dot current"></i> posição atual</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // Configuração dos tabuleiros: tamanho, rótulo, dificuldade e
+  // "meta" — um tempo de referência estimado pela complexidade,
+  // não um limite: dá pra terminar depois dele, é só um objetivo.
+  // ---------------------------------------------------------------
+  const BOARD_CONFIGS = [
+    { size: 5,  label: "5×5",   diff: "Fácil",          par: 90  },
+    { size: 6,  label: "6×6",   diff: "Médio",          par: 150 },
+    { size: 7,  label: "7×7",   diff: "Difícil",        par: 240 },
+    { size: 8,  label: "8×8",   diff: "Muito difícil",  par: 360 },
+    { size: 10, label: "10×10", diff: "Extremo",        par: 600 },
+  ];
+
+  const KNIGHT_MOVES = [
+    [-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]
+  ];
+
+  const state = {
+    configIndex: 0,
+    size: 5,
+    visited: [],      // matriz NxN: 0 = não visitada, n = ordem da visita
+    order: [],         // [{r,c}, ...] na ordem visitada
+    current: null,      // {r,c} ou null
+    status: "idle",      // idle | playing | won | stuck
+    startTime: null,
+    elapsed: 0,
+    cells: [],            // referências aos botões do tabuleiro atual
+    timerHandle: null,
+  };
+
+  // ---- referências DOM ----
+  const boardEl = document.getElementById("board");
+  const sizeSelectorEl = document.getElementById("sizeSelector");
+  const restartBtn = document.getElementById("restartBtn");
+  const messageEl = document.getElementById("message");
+  const statProgress = document.getElementById("statProgress");
+  const statTimer = document.getElementById("statTimer");
+  const statPar = document.getElementById("statPar");
+  const statDiff = document.getElementById("statDiff");
+
+  // ---------------------------------------------------------------
+  // Utilitários
+  // ---------------------------------------------------------------
+  function currentConfig(){ return BOARD_CONFIGS[state.configIndex]; }
+
+  function formatTime(totalSeconds){
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2,"0");
+    const s = Math.floor(totalSeconds % 60).toString().padStart(2,"0");
+    return `${m}:${s}`;
+  }
+
+  function isKnightMove(a,b){
+    const dr = Math.abs(a.r - b.r), dc = Math.abs(a.c - b.c);
+    return (dr===1 && dc===2) || (dr===2 && dc===1);
+  }
+
+  function getLegalMoves(pos){
+    const moves = [];
+    for(const [dr,dc] of KNIGHT_MOVES){
+      const r = pos.r + dr, c = pos.c + dc;
+      if(r>=0 && r<state.size && c>=0 && c<state.size && state.visited[r][c]===0){
+        moves.push({r,c});
+      }
+    }
+    return moves;
+  }
+
+  // cor do "rastro": interpola de azul-estelar a dourado ao longo do caminho
+  function colorFor(index, total){
+    const t = total > 1 ? index/(total-1) : 0;
+    const hue = 205 + (38 - 205) * t;
+    return `hsl(${hue}, 68%, 58%)`;
+  }
+
+  // ---------------------------------------------------------------
+  // Construção do tabuleiro
+  // ---------------------------------------------------------------
+  function renderBoard(){
+    boardEl.innerHTML = "";
+    boardEl.style.gridTemplateColumns = `repeat(${state.size}, 1fr)`;
+    boardEl.style.gridTemplateRows = `repeat(${state.size}, 1fr)`;
+    state.cells = [];
+
+    for(let r=0; r<state.size; r++){
+      for(let c=0; c<state.size; c++){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `cell ${(r+c)%2===0 ? "sq-a" : "sq-b"}`;
+        btn.dataset.r = r;
+        btn.dataset.c = c;
+        btn.setAttribute("aria-label", `Casa linha ${r+1}, coluna ${c+1}`);
+        boardEl.appendChild(btn);
+        state.cells.push(btn);
+      }
+    }
+    sizeCells();
+  }
+
+  function sizeCells(){
+    const w = boardEl.getBoundingClientRect().width;
+    const cellPx = w / state.size;
+    boardEl.style.setProperty("--cellFont", Math.max(10, cellPx*0.30) + "px");
+    boardEl.style.setProperty("--knight-size", Math.max(14, cellPx*0.52) + "px");
+  }
+
+  function updateBoard(){
+    for(const btn of state.cells){
+      const r = +btn.dataset.r, c = +btn.dataset.c;
+      const num = state.visited[r][c];
+      const isCurrent = state.current && state.current.r===r && state.current.c===c;
+
+      btn.classList.remove("visited","current","legal");
+      btn.style.removeProperty("--trail-color");
+      btn.innerHTML = "";
+
+      if(isCurrent){
+        btn.classList.add("current");
+        btn.innerHTML = `<span class="knight-icon" aria-hidden="true">♞</span>`;
+        btn.setAttribute("aria-label", `Casa linha ${r+1}, coluna ${c+1} — posição atual do cavalo`);
+      } else if(num > 0){
+        btn.classList.add("visited");
+        btn.style.setProperty("--trail-color", colorFor(num-1, state.order.length));
+        btn.innerHTML = `<span class="move-num">${num}</span>`;
+        btn.setAttribute("aria-label", `Casa linha ${r+1}, coluna ${c+1} — visitada, movimento ${num}`);
+      } else {
+        btn.setAttribute("aria-label", `Casa linha ${r+1}, coluna ${c+1}`);
+        if(state.status === "playing" && state.current && isKnightMove(state.current, {r,c})){
+          btn.classList.add("legal");
+        }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Estatísticas, mensagens e timer
+  // ---------------------------------------------------------------
+  function updateStats(){
+    const cfg = currentConfig();
+    statProgress.textContent = `${state.order.length}/${state.size*state.size}`;
+    statTimer.textContent = formatTime(state.elapsed);
+    statPar.textContent = formatTime(cfg.par);
+    statDiff.textContent = cfg.diff;
+  }
+
+  function updateMessage(){
+    const cfg = currentConfig();
+    let text = "", cls = "info";
+
+    if(state.status === "idle"){
+      text = "Clique em qualquer casa para posicionar o cavalo e começar.";
+    } else if(state.status === "playing"){
+      const legalCount = getLegalMoves(state.current).length;
+      text = `Movimento ${state.order.length} de ${state.size*state.size} — ${legalCount} ${legalCount===1 ? "movimento possível" : "movimentos possíveis"} a partir daqui.`;
+    } else if(state.status === "won"){
+      const beatPar = state.elapsed <= cfg.par;
+      text = `🏆 Passeio completo! Você visitou as ${state.size*state.size} casas em ${formatTime(state.elapsed)}. ` +
+             (beatPar
+               ? `Dentro da meta de ${formatTime(cfg.par)} — excelente!`
+               : `A meta de referência era ${formatTime(cfg.par)}, mas você fechou o desafio mesmo assim.`);
+      cls = "won";
+    } else if(state.status === "stuck"){
+      text = `Sem movimentos válidos — ${state.order.length} de ${state.size*state.size} casas visitadas. Clique em "Reiniciar" para tentar outro caminho.`;
+      cls = "stuck";
+    }
+
+    messageEl.textContent = text;
+    messageEl.className = `message ${cls}`;
+  }
+
+  function startTimer(){
+    stopTimer();
+    state.startTime = Date.now();
+    state.timerHandle = setInterval(() => {
+      state.elapsed = Math.floor((Date.now() - state.startTime)/1000);
+      statTimer.textContent = formatTime(state.elapsed);
+    }, 1000);
+  }
+
+  function stopTimer(){
+    if(state.timerHandle){ clearInterval(state.timerHandle); state.timerHandle = null; }
+  }
+
+  function flashInvalid(cellEl){
+    cellEl.classList.add("invalid");
+    setTimeout(() => cellEl.classList.remove("invalid"), 300);
+  }
+
+  // ---------------------------------------------------------------
+  // Fluxo do jogo
+  // ---------------------------------------------------------------
+  function resetBoard(){
+    stopTimer();
+    const cfg = currentConfig();
+    state.size = cfg.size;
+    state.visited = Array.from({length: state.size}, () => Array(state.size).fill(0));
+    state.order = [];
+    state.current = null;
+    state.status = "idle";
+    state.elapsed = 0;
+
+    renderBoard();
+    updateBoard();
+    updateStats();
+    updateMessage();
+  }
+
+  function startGame(r,c){
+    state.visited[r][c] = 1;
+    state.order = [{r,c}];
+    state.current = {r,c};
+    state.status = "playing";
+    state.elapsed = 0;
+    startTimer();
+    updateBoard(); updateStats(); updateMessage();
+  }
+
+  function makeMove(r,c){
+    const num = state.order.length + 1;
+    state.visited[r][c] = num;
+    state.order.push({r,c});
+    state.current = {r,c};
+
+    if(num === state.size*state.size){
+      state.status = "won";
+      stopTimer();
+    } else if(getLegalMoves(state.current).length === 0){
+      state.status = "stuck";
+      stopTimer();
+    }
+
+    updateBoard(); updateStats(); updateMessage();
+  }
+
+  function handleCellClick(r,c,cellEl){
+    if(state.status === "won" || state.status === "stuck") return;
+
+    if(state.status === "idle"){
+      startGame(r,c);
+      return;
+    }
+
+    // status === "playing"
+    if(state.visited[r][c] !== 0){ flashInvalid(cellEl); return; }
+    if(!isKnightMove(state.current, {r,c})){ flashInvalid(cellEl); return; }
+    makeMove(r,c);
+  }
+
+  // ---------------------------------------------------------------
+  // Seletor de tabuleiro
+  // ---------------------------------------------------------------
+  function buildSizeSelector(){
+    sizeSelectorEl.innerHTML = "";
+    BOARD_CONFIGS.forEach((cfg, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "size-btn" + (idx === state.configIndex ? " active" : "");
+      btn.innerHTML = `<span class="sz">${cfg.label}</span><span class="diff">${cfg.diff}</span>`;
+      btn.addEventListener("click", () => {
+        state.configIndex = idx;
+        [...sizeSelectorEl.children].forEach((b,i) => b.classList.toggle("active", i===idx));
+        resetBoard();
+      });
+      sizeSelectorEl.appendChild(btn);
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Inicialização
+  // ---------------------------------------------------------------
+  boardEl.addEventListener("click", (e) => {
+    const cell = e.target.closest(".cell");
+    if(!cell) return;
+    handleCellClick(+cell.dataset.r, +cell.dataset.c, cell);
+  });
+
+  restartBtn.addEventListener("click", resetBoard);
+  window.addEventListener("resize", () => sizeCells());
+
+  buildSizeSelector();
+  resetBoard();
+})();
+</script>
+
+</body>
+</html>
